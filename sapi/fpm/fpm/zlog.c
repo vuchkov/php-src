@@ -414,7 +414,8 @@ static inline ssize_t zlog_stream_unbuffered_write(
 static inline ssize_t zlog_stream_buf_copy_cstr(
 		struct zlog_stream *stream, const char *str, size_t str_len) /* {{{ */
 {
-	if (stream->buf.size - stream->len <= str_len && !zlog_stream_buf_alloc_ex(stream, str_len)) {
+	if (stream->buf.size - stream->len <= str_len &&
+			!zlog_stream_buf_alloc_ex(stream, str_len + stream->len)) {
 		return -1;
 	}
 
@@ -563,6 +564,18 @@ void zlog_stream_set_wrapping(struct zlog_stream *stream, zlog_bool wrap) /* {{{
 }
 /* }}} */
 
+void zlog_stream_set_is_stdout(struct zlog_stream *stream, zlog_bool is_stdout) /* {{{ */
+{
+	stream->is_stdout = is_stdout ? 1 : 0;
+}
+/* }}} */
+
+void zlog_stream_set_child_pid(struct zlog_stream *stream, int child_pid) /* {{{ */
+{
+	stream->child_pid = child_pid;
+}
+/* }}} */
+
 void zlog_stream_set_msg_quoting(struct zlog_stream *stream, zlog_bool quote) /* {{{ */
 {
 	stream->msg_quote = quote && stream->decorate ? 1 : 0;
@@ -583,9 +596,11 @@ zlog_bool zlog_stream_set_msg_prefix(struct zlog_stream *stream, const char *fmt
 	len = vsnprintf(buf, MAX_WRAPPING_PREFIX_LENGTH - 1, fmt, args);
 	va_end(args);
 
-	stream->msg_prefix = malloc(len + 1);
-	if (stream->msg_prefix == NULL) {
-		return ZLOG_FALSE;
+	if (stream->msg_prefix_len < len) {
+		stream->msg_prefix = stream->msg_prefix_len ? realloc(stream->msg_prefix, len + 1) : malloc(len + 1);
+		if (stream->msg_prefix == NULL) {
+			return ZLOG_FALSE;
+		}
 	}
 	memcpy(stream->msg_prefix, buf, len);
 	stream->msg_prefix[len] = 0;
@@ -720,14 +735,16 @@ ssize_t zlog_stream_format(struct zlog_stream *stream, const char *fmt, ...) /* 
 
 ssize_t zlog_stream_str(struct zlog_stream *stream, const char *str, size_t str_len) /* {{{ */
 {
+	/* do not write anything if the stream is full or str is empty */
+	if (str_len == 0 || stream->full) {
+		return 0;
+	}
+
 	/* reset stream if it is finished */
 	if (stream->finished) {
 		stream->finished = 0;
 		stream->len = 0;
 		stream->full = 0;
-	} else if (stream->full) {
-		/* do not write anything if the stream is full */
-		return 0;
 	}
 
 	if (stream->use_buffer) {

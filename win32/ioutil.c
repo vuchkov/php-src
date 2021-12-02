@@ -1,13 +1,11 @@
 /*
    +----------------------------------------------------------------------+
-   | PHP Version 7                                                        |
-   +----------------------------------------------------------------------+
    | Copyright (c) The PHP Group                                          |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
    | that is bundled with this package in the file LICENSE, and is        |
    | available through the world-wide-web at the following url:           |
-   | http://www.php.net/license/3_01.txt                                  |
+   | https://www.php.net/license/3_01.txt                                 |
    | If you did not receive a copy of the PHP license and are unable to   |
    | obtain it through the world-wide-web, please send a note to          |
    | license@php.net so we can mail you a copy immediately.               |
@@ -322,13 +320,23 @@ PW32IO int php_win32_ioutil_mkdir_w(const wchar_t *path, mode_t mode)
 
 		if (!PHP_WIN32_IOUTIL_IS_LONG_PATHW(tmp, path_len)) {
 			wchar_t *_tmp = (wchar_t *) malloc((path_len + PHP_WIN32_IOUTIL_LONG_PATH_PREFIX_LENW + 1) * sizeof(wchar_t));
+			wchar_t *src, *dst;
 			if (!_tmp) {
 				SET_ERRNO_FROM_WIN32_CODE(ERROR_NOT_ENOUGH_MEMORY);
 				free(tmp);
 				return -1;
 			}
 			memmove(_tmp, PHP_WIN32_IOUTIL_LONG_PATH_PREFIXW, PHP_WIN32_IOUTIL_LONG_PATH_PREFIX_LENW * sizeof(wchar_t));
-			memmove(_tmp+PHP_WIN32_IOUTIL_LONG_PATH_PREFIX_LENW, tmp, path_len * sizeof(wchar_t));
+			src = tmp;
+			dst = _tmp + PHP_WIN32_IOUTIL_LONG_PATH_PREFIX_LENW;
+			while (src < tmp + path_len) {
+				if (*src == PHP_WIN32_IOUTIL_FW_SLASHW) {
+					*dst++ = PHP_WIN32_IOUTIL_DEFAULT_SLASHW;
+					src++;
+				} else {
+					*dst++ = *src++;
+				}
+			}
 			path_len += PHP_WIN32_IOUTIL_LONG_PATH_PREFIX_LENW;
 			_tmp[path_len] = L'\0';
 			free(tmp);
@@ -852,20 +860,9 @@ static int php_win32_ioutil_fstat_int(HANDLE h, php_win32_ioutil_stat_t *buf, co
 	BY_HANDLE_FILE_INFORMATION d;
 	PBY_HANDLE_FILE_INFORMATION data;
 	LARGE_INTEGER t;
-	wchar_t mypath[MAXPATHLEN];
 	uint8_t is_dir;
 
 	data = !dp ? &d : dp;
-
-	if (!pathw) {
-		pathw_len = GetFinalPathNameByHandleW(h, mypath, MAXPATHLEN, VOLUME_NAME_DOS);
-		if (pathw_len >= MAXPATHLEN || pathw_len == 0) {
-			pathw_len = 0;
-			pathw = NULL;
-		} else {
-			pathw = mypath;
-		}
-	}
 
 	if(!GetFileInformationByHandle(h, data)) {
 		if (INVALID_HANDLE_VALUE != h) {
@@ -942,7 +939,20 @@ static int php_win32_ioutil_fstat_int(HANDLE h, php_win32_ioutil_stat_t *buf, co
 	}
 
 	if ((data->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) == 0) {
-		buf->st_mode |= is_dir ? (S_IFDIR|S_IEXEC|(S_IEXEC>>3)|(S_IEXEC>>6)) : S_IFREG;
+		if (is_dir) {
+			buf->st_mode |= (S_IFDIR|S_IEXEC|(S_IEXEC>>3)|(S_IEXEC>>6));
+		} else {
+			switch (GetFileType(h)) {
+				case FILE_TYPE_CHAR:
+					buf->st_mode |= S_IFCHR;
+					break;
+				case FILE_TYPE_PIPE:
+					buf->st_mode |= S_IFIFO;
+					break;
+				default:
+					buf->st_mode |= S_IFREG;
+			}
+		}
 		buf->st_mode |= (data->dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? (S_IREAD|(S_IREAD>>3)|(S_IREAD>>6)) : (S_IREAD|(S_IREAD>>3)|(S_IREAD>>6)|S_IWRITE|(S_IWRITE>>3)|(S_IWRITE>>6));
 	}
 
@@ -1150,8 +1160,8 @@ PW32IO ssize_t php_win32_ioutil_readlink_w(const wchar_t *path, wchar_t *buf, si
 
 	ret = php_win32_ioutil_readlink_int(h, buf, buf_len);
 
-	if (ret < 0) {		
-		wchar_t target[PHP_WIN32_IOUTIL_MAXPATHLEN];		
+	if (ret < 0) {
+		wchar_t target[PHP_WIN32_IOUTIL_MAXPATHLEN];
 		size_t target_len;
 		size_t offset = 0;
 

@@ -2,19 +2,16 @@
 Test dirname() function : error conditions
 --FILE--
 <?php
-/* Prototype: string dirname ( string $path );
-   Description: Returns directory name component of path.
-*/
 echo "*** Testing error conditions ***\n";
 
 // Bad arg
-var_dump( dirname("/var/tmp/bar.gz", 0) );
+try {
+    dirname("/var/tmp/bar.gz", 0);
+} catch (\ValueError $e) {
+    echo $e->getMessage() . "\n";
+}
 
-echo "Done\n";
 ?>
---EXPECTF--
+--EXPECT--
 *** Testing error conditions ***
-
-Warning: dirname(): Invalid argument, levels must be >= 1 in %s on line %d
-NULL
-Done
+dirname(): Argument #2 ($levels) must be greater than or equal to 1

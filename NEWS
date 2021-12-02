@@ -1,51 +1,22 @@
 PHP                                                                        NEWS
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-?? ??? ????, PHP 8.0.0alpha1
+?? ??? ????, PHP 8.2.0alpha1
+
+- CLI:
+  . Fixed bug #81496 (Server logs incorrect request method). (lauri)
 
 - Core:
-  . Removed the pdo_odbc.db2_instance_name php.ini directive. (Kalle)
-  . Fixed bug #77619 (Wrong reflection on MultipleIterator::__construct).
-    (Fabien Villepinte)
-
-- Date:
-  . Fixed bug #65547 (Default value for sunrise/sunset zenith still wrong).
-    (cmb)
-  . Fixed bug #69044 (discrepency between time and microtime). (krakjoe)
-
-- GD:
-  . Removed deprecated image2wbmp(). (cmb)
-  . Removed deprecated png2wbmp() and jpeg2wbmp(). (cmb)
+  . Fixed bug #81380 (Observer may not be initialized properly). (krakjoe)
 
 - Intl:
-  . Removed deprecated INTL_IDNA_VARIANT_2003. (cmb)
+  . Update all grandfathered language tags with preferred values
 
-- JIT:
-  . Fixed bug #77857 (Wrong result if executed with JIT). (Laruence)
+- OCI8:
+  . Added oci8.prefetch_lob_size directive to tune LOB query performance
 
-- LDAP:
-  . Removed deprecated ldap_sort. (mcmic)
-
-- mysqlnd:
-  . Fixed #60594 (mysqlnd exposes 160 lines of stats in phpinfo). (PeeHaa)
-
-- PCRE:
-  . Don't ignore invalid escape sequences. (sjon)
-
-- PDO:
-  . Fixed bug #77849 (Disable cloning of PDO handle/connection objects).
-    (camporter)
-
-- phpdbg:
-  . Fixed bug #76596 (phpdbg support for display_errors=stderr). (kabel)
-  . Fixed bug #76801 (too many open files). (alekitto)
-  . Fixed bug #77800 (phpdbg segfaults on listing some conditional breakpoints).
-    (krakjoe)
-  . Fixed bug #77805 (phpdbg build fails when readline is shared). (krakjoe)
-  
-- sodium:
-  . Fixed bug #77646 (sign_detached() strings not terminated). (Frank)
-
-- XML:
-  . Fixed bug #76874 (xml_parser_free() should never leak memory). (Nikita
+- Zip:
+  . add ZipArchive::clearError() method
+  . add ZipArchive::getStreamName() method
+  . add ZipArchive::getStreamIndex() method
 
 <<< NOTE: Insert NEWS from last stable release here prior to actual release! >>>

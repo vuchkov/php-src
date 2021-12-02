@@ -1,5 +1,7 @@
 --TEST--
 odbc_free_result(): Basic test
+--EXTENSIONS--
+odbc
 --SKIPIF--
 <?php include 'skipif.inc'; ?>
 --FILE--
@@ -43,7 +45,7 @@ odbc_exec($conn, 'DROP TABLE FOO');
 odbc_exec($conn, 'DROP DATABASE odbcTEST');
 
 ?>
---EXPECTF--
+--EXPECT--
 bool(true)
 string(1) "1"
 bool(true)

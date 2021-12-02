@@ -1,13 +1,11 @@
 /*
    +----------------------------------------------------------------------+
-   | PHP Version 7                                                        |
-   +----------------------------------------------------------------------+
    | Copyright (c) The PHP Group                                          |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
    | that is bundled with this package in the file LICENSE, and is        |
    | available through the world-wide-web at the following url:           |
-   | http://www.php.net/license/3_01.txt                                  |
+   | https://www.php.net/license/3_01.txt                                 |
    | If you did not receive a copy of the PHP license and are unable to   |
    | obtain it through the world-wide-web, please send a note to          |
    | license@php.net so we can mail you a copy immediately.               |
@@ -32,14 +30,12 @@ php llk.php ffi.g
 %{
 /*
    +----------------------------------------------------------------------+
-   | PHP Version 7                                                        |
-   +----------------------------------------------------------------------+
    | Copyright (c) The PHP Group                                          |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
    | that is bundled with this package in the file LICENSE, and is        |
    | available through the world-wide-web at the following url:           |
-   | http://www.php.net/license/3_01.txt                                  |
+   | https://www.php.net/license/3_01.txt                                 |
    | If you did not receive a copy of the PHP license and are unable to   |
    | obtain it through the world-wide-web, please send a note to          |
    | license@php.net so we can mail you a copy immediately.               |
@@ -127,14 +123,6 @@ declaration_specifiers(zend_ffi_dcl *dcl):
 			{dcl->flags |= ZEND_FFI_DCL_INLINE;}
 		|	"_Noreturn"
 			{dcl->flags |= ZEND_FFI_DCL_NO_RETURN;}
-		|	"__cdecl"
-			{zend_ffi_set_abi(dcl, ZEND_FFI_ABI_CDECL);}
-		|	"__stdcall"
-			{zend_ffi_set_abi(dcl, ZEND_FFI_ABI_STDCALL);}
-		|	"__fastcall"
-			{zend_ffi_set_abi(dcl, ZEND_FFI_ABI_FASTCALL);}
-		|	"__thiscall"
-			{zend_ffi_set_abi(dcl, ZEND_FFI_ABI_THISCALL);}
 		|	"_Alignas"
 			"("
 			(	&type_name_start
@@ -155,7 +143,7 @@ declaration_specifiers(zend_ffi_dcl *dcl):
 
 specifier_qualifier_list(zend_ffi_dcl *dcl):
 	"__extension__"?
-	(	?{sym != YY_ID || zend_ffi_is_typedef_name((const char*)yy_text, yy_pos - yy_text)}
+	(	?{sym != YY_ID || zend_ffi_is_typedef_name((const char*)yy_text, yy_pos - yy_text) || (dcl->flags & ZEND_FFI_DCL_TYPE_SPECIFIERS) == 0}
 		(	type_specifier(dcl)
 		|	type_qualifier(dcl)
 		|	attributes(dcl)
@@ -221,7 +209,7 @@ type_specifier(zend_ffi_dcl *dcl):
 	|	{if (dcl->flags & ZEND_FFI_DCL_TYPE_SPECIFIERS) yy_error_sym("unexpected", sym);}
 		"_Bool"
 		{dcl->flags |= ZEND_FFI_DCL_BOOL;}
-	|	{if (dcl->flags & (ZEND_FFI_DCL_TYPE_SPECIFIERS-(ZEND_FFI_DCL_FLOAT|ZEND_FFI_DCL_DOUBLE|ZEND_FFI_DCL_LONG))) yy_error_sym("Unexpected '%s'", sym);}
+	|	{if (dcl->flags & (ZEND_FFI_DCL_TYPE_SPECIFIERS-(ZEND_FFI_DCL_FLOAT|ZEND_FFI_DCL_DOUBLE|ZEND_FFI_DCL_LONG))) yy_error_sym("unexpected", sym);}
 		("_Complex"|"complex"|"__complex"|"__complex__")
 		{dcl->flags |= ZEND_FFI_DCL_COMPLEX;}
 //	|	"_Atomic" "(" type_name ")" // TODO: not-implemented ???
@@ -347,7 +335,7 @@ enumerator(zend_ffi_dcl *enum_dcl, int64_t *min, int64_t *max, int64_t *last):
 
 declarator(zend_ffi_dcl *dcl, const char **name, size_t *name_len):
 	{zend_ffi_dcl nested_dcl = {ZEND_FFI_DCL_CHAR, 0, 0, 0, NULL};}
-	{zend_bool nested = 0;}
+	{bool nested = 0;}
 	pointer(dcl)?
 	(	ID(name, name_len)
 	|	"("
@@ -362,7 +350,7 @@ declarator(zend_ffi_dcl *dcl, const char **name, size_t *name_len):
 
 abstract_declarator(zend_ffi_dcl *dcl):
 	{zend_ffi_dcl nested_dcl = {ZEND_FFI_DCL_CHAR, 0, 0, 0, NULL};}
-	{zend_bool nested = 0;}
+	{bool nested = 0;}
 	pointer(dcl)?
 	(	&nested_declarator_start
 		"("
@@ -377,7 +365,7 @@ abstract_declarator(zend_ffi_dcl *dcl):
 
 parameter_declarator(zend_ffi_dcl *dcl, const char **name, size_t *name_len):
 	{zend_ffi_dcl nested_dcl = {ZEND_FFI_DCL_CHAR, 0, 0, 0, NULL};}
-	{zend_bool nested = 0;}
+	{bool nested = 0;}
 	pointer(dcl)?
 	(	&nested_declarator_start
 		"("
@@ -452,7 +440,7 @@ array_or_function_declarators(zend_ffi_dcl *dcl, zend_ffi_dcl *nested_dcl):
 parameter_declaration(HashTable **args):
 	{const char *name = NULL;}
 	{size_t name_len = 0;}
-	{zend_bool old_allow_vla = FFI_G(allow_vla);}
+	{bool old_allow_vla = FFI_G(allow_vla);}
 	{FFI_G(allow_vla) = 1;}
 	{zend_ffi_dcl param_dcl = ZEND_FFI_ATTR_INIT;}
 	specifier_qualifier_list(&param_dcl)
@@ -492,6 +480,16 @@ attributes(zend_ffi_dcl *dcl):
 				)?
 			)+
 		")"
+	|	"__cdecl"
+		{zend_ffi_set_abi(dcl, ZEND_FFI_ABI_CDECL);}
+	|	"__stdcall"
+		{zend_ffi_set_abi(dcl, ZEND_FFI_ABI_STDCALL);}
+	|	"__fastcall"
+		{zend_ffi_set_abi(dcl, ZEND_FFI_ABI_FASTCALL);}
+	|	"__thiscall"
+		{zend_ffi_set_abi(dcl, ZEND_FFI_ABI_THISCALL);}
+	|	"__vectorcall"
+		{zend_ffi_set_abi(dcl, ZEND_FFI_ABI_VECTORCALL);}
 	)++
 ;
 
@@ -500,7 +498,7 @@ attrib(zend_ffi_dcl *dcl):
 	{size_t name_len;}
 	{int n;}
 	{zend_ffi_val val;}
-	{zend_bool orig_attribute_parsing;}
+	{bool orig_attribute_parsing;}
 	(   ID(&name, &name_len)
 		(	/* empty */
 			{zend_ffi_add_attribute(dcl, name, name_len);}
@@ -880,7 +878,7 @@ COMMENT: /\/\*([^\*]|\*+[^\*\/])*\*+\//;
 SKIP: ( EOL | WS | ONE_LINE_COMMENT | COMMENT )*;
 
 %%
-int zend_ffi_parse_decl(const char *str, size_t len) {
+zend_result zend_ffi_parse_decl(const char *str, size_t len) {
 	if (SETJMP(FFI_G(bailout))==0) {
 		FFI_G(allow_vla) = 0;
 		FFI_G(attribute_parsing) = 0;
@@ -893,7 +891,7 @@ int zend_ffi_parse_decl(const char *str, size_t len) {
 	}
 }
 
-int zend_ffi_parse_type(const char *str, size_t len, zend_ffi_dcl *dcl) {
+zend_result zend_ffi_parse_type(const char *str, size_t len, zend_ffi_dcl *dcl) {
 	int sym;
 
 	if (SETJMP(FFI_G(bailout))==0) {

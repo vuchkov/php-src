@@ -1,9 +1,15 @@
 --TEST--
 Test oniguruma stack limit
+--EXTENSIONS--
+mbstring
+iconv
 --SKIPIF--
-<?php extension_loaded('mbstring') or die('skip mbstring not available'); ?>
---XFAIL--
-Travis CI has old oniguruma library
+<?php
+if (!function_exists('mb_ereg_replace')) die('skip mb_ereg_replace not available');
+if (version_compare(MB_ONIGURUMA_VERSION, '6.9.3') < 0) {
+    die('skip requires Oniguruma 6.9.3');
+}
+?>
 --FILE--
 <?php
 function mb_trim( $string, $chars = "", $chars_array = array() )

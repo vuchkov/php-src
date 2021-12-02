@@ -5,8 +5,9 @@ SplFileObject::ftruncate function - truncating with stream that does not support
 
 //create a basic stream class
 class VariableStream {
-    var $position;
-    var $varname;
+    public $position;
+    public $varname;
+    public $context;
 
     function stream_open($path, $mode, $options, &$opened_path)
     {
@@ -23,9 +24,9 @@ $ftruncate_test = "";
 //open an SplFileObject using the above test stream
 $obj = New SplFileObject("SPLtest://ftruncate_test");
 try {
-	$obj->ftruncate(1);
+    $obj->ftruncate(1);
 } catch (LogicException $e) {
-	echo($e->getMessage());
+    echo($e->getMessage());
 }
 ?>
 --EXPECTF--

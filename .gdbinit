@@ -11,9 +11,7 @@ end
 
 define ____executor_globals
 	if basic_functions_module.zts
-		if !$tsrm_ls
-			set $tsrm_ls = ts_resource_ex(0, 0)
-		end
+		set $tsrm_ls = _tsrm_ls_cache
 		set $eg = ((zend_executor_globals*) (*((void ***) $tsrm_ls))[executor_globals_id-1])
 		set $cg = ((zend_compiler_globals*) (*((void ***) $tsrm_ls))[compiler_globals_id-1])
 		set $eg_ptr = $eg
@@ -252,16 +250,13 @@ define ____printzv_contents
 		____printzv &$zvalue->value.ref->val $arg1
 	end
 	if $type == 11
-		printf "const: %s", $zvalue->value.str->val
-	end
-	if $type == 12
 		printf "CONSTANT_AST"
 	end
-	if $type == 13
+	if $type == 12
 		printf "indirect: "
 		____printzv $zvalue->value.zv $arg1
 	end
-	if $type == 14
+	if $type == 13
 		printf "pointer: %p", $zvalue->value.ptr
 	end
 	if $type == 15
@@ -271,18 +266,9 @@ define ____printzv_contents
 		printf "_BOOL"
 	end
 	if $type == 17
-		printf "CALLABLE"
-	end
-	if $type == 18
-		printf "ITERABLE"
-	end
-	if $type == 19
-		printf "VOID"
-	end
-	if $type == 20
 		printf "_NUMBER"
 	end
-	if $type > 20
+	if $type > 17
 		printf "unknown type %d", $type
 	end
 	printf "\n"
@@ -352,7 +338,8 @@ define ____print_ht
 			end
 			printf "[%d] ", $i
 			if $p->key
-				printf "%s => ", $p->key->val
+				____print_str $p->key->val $p->key->len
+				printf " => "
 			else
 				printf "%d => ", $p->h
 			end

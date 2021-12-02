@@ -1,7 +1,7 @@
 --TEST--
 openssl_sign() tests
---SKIPIF--
-<?php if (!extension_loaded("openssl")) print "skip"; ?>
+--EXTENSIONS--
+openssl
 --FILE--
 <?php
 $data = "Testing openssl_sign()";
@@ -14,5 +14,5 @@ var_dump(openssl_sign($data, $sign, $wrong));
 --EXPECTF--
 bool(true)
 
-Warning: openssl_sign(): supplied key param cannot be coerced into a private key in %s on line %d
+Warning: openssl_sign(): Supplied key param cannot be coerced into a private key in %s on line %d
 bool(false)

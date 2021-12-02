@@ -16,7 +16,6 @@
 #include "fpm_children.h"
 #include "fpm_scoreboard.h"
 #include "fpm_status.h"
-#include "fpm_stdio.h"
 #include "fpm_request.h"
 #include "fpm_log.h"
 
@@ -200,7 +199,6 @@ void fpm_request_end(void) /* {{{ */
 #endif
 	proc->memory = memory;
 	fpm_scoreboard_proc_release(proc);
-	fpm_stdio_flush_child();
 }
 /* }}} */
 
@@ -223,7 +221,7 @@ void fpm_request_finished() /* {{{ */
 }
 /* }}} */
 
-void fpm_request_check_timed_out(struct fpm_child_s *child, struct timeval *now, int terminate_timeout, int slowlog_timeout) /* {{{ */
+void fpm_request_check_timed_out(struct fpm_child_s *child, struct timeval *now, int terminate_timeout, int slowlog_timeout, int track_finished) /* {{{ */
 {
 	struct fpm_scoreboard_proc_s proc, *proc_p;
 
@@ -245,7 +243,7 @@ void fpm_request_check_timed_out(struct fpm_child_s *child, struct timeval *now,
 	}
 #endif
 
-	if (proc.request_stage > FPM_REQUEST_ACCEPTING && proc.request_stage < FPM_REQUEST_END) {
+	if (proc.request_stage > FPM_REQUEST_ACCEPTING && ((proc.request_stage < FPM_REQUEST_END) || track_finished)) {
 		char purified_script_filename[sizeof(proc.script_filename)];
 		struct timeval tv;
 
@@ -287,7 +285,7 @@ int fpm_request_is_idle(struct fpm_child_s *child) /* {{{ */
 	struct fpm_scoreboard_proc_s *proc;
 
 	/* no need in atomicity here */
-	proc = fpm_scoreboard_proc_get(child->wp->scoreboard, child->scoreboard_i);
+	proc = fpm_scoreboard_proc_get_from_child(child);
 	if (!proc) {
 		return 0;
 	}
@@ -302,7 +300,7 @@ int fpm_request_last_activity(struct fpm_child_s *child, struct timeval *tv) /* 
 
 	if (!tv) return -1;
 
-	proc = fpm_scoreboard_proc_get(child->wp->scoreboard, child->scoreboard_i);
+	proc = fpm_scoreboard_proc_get_from_child(child);
 	if (!proc) {
 		return -1;
 	}

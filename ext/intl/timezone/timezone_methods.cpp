@@ -1,11 +1,9 @@
 /*
    +----------------------------------------------------------------------+
-   | PHP Version 7                                                        |
-   +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
    | that is bundled with this package in the file LICENSE, and is        |
    | available through the world-wide-web at the following url:           |
-   | http://www.php.net/license/3_01.txt                                  |
+   | https://www.php.net/license/3_01.txt                                 |
    | If you did not receive a copy of the PHP license and are unable to   |
    | obtain it through the world-wide-web, please send a note to          |
    | license@php.net so we can mail you a copy immediately.               |
@@ -55,7 +53,7 @@ U_CFUNC PHP_FUNCTION(intltz_create_time_zone)
 	intl_error_reset(NULL);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &str_id, &str_id_len) == FAILURE) {
-		RETURN_NULL();
+		RETURN_THROWS();
 	}
 
 	UErrorCode status = UErrorCode();
@@ -80,7 +78,7 @@ U_CFUNC PHP_FUNCTION(intltz_from_date_time_zone)
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O",
 			&zv_timezone, php_date_get_timezone_ce()) == FAILURE) {
-		RETURN_NULL();
+		RETURN_THROWS();
 	}
 
 	tzobj = Z_PHPTIMEZONE_P(zv_timezone);
@@ -91,7 +89,7 @@ U_CFUNC PHP_FUNCTION(intltz_from_date_time_zone)
 		RETURN_NULL();
 	}
 
-	tz = timezone_convert_datetimezone(tzobj->type, tzobj, FALSE, NULL,
+	tz = timezone_convert_datetimezone(tzobj->type, tzobj, false, NULL,
 		"intltz_from_date_time_zone");
 	if (tz == NULL) {
 		RETURN_NULL();
@@ -105,7 +103,7 @@ U_CFUNC PHP_FUNCTION(intltz_create_default)
 	intl_error_reset(NULL);
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		RETURN_NULL();
+		return;
 	}
 
 	TimeZone *tz = TimeZone::createDefault();
@@ -117,7 +115,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_gmt)
 	intl_error_reset(NULL);
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		RETURN_NULL();
+		RETURN_THROWS();
 	}
 
 	timezone_object_construct(TimeZone::getGMT(), return_value, 0);
@@ -128,7 +126,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_unknown)
 	intl_error_reset(NULL);
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		RETURN_NULL();
+		RETURN_THROWS();
 	}
 
 	timezone_object_construct(&TimeZone::getUnknown(), return_value, 0);
@@ -143,7 +141,7 @@ U_CFUNC PHP_FUNCTION(intltz_create_enumeration)
 	/* double indirection to have the zend engine destroy the new zval that
 	 * results from separation */
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|z", &arg) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	if (arg == NULL || Z_TYPE_P(arg) == IS_NULL) {
@@ -160,13 +158,13 @@ int_offset:
 		}
 	} else if (Z_TYPE_P(arg) == IS_DOUBLE) {
 double_offset:
-		convert_to_long_ex(arg);
+		convert_to_long(arg);
 		goto int_offset;
 	} else if (Z_TYPE_P(arg) == IS_OBJECT || Z_TYPE_P(arg) == IS_STRING) {
 		zend_long lval;
 		double dval;
 		if (!try_convert_to_string(arg)) {
-			return;
+			RETURN_THROWS();
 		}
 		switch (is_numeric_string(Z_STRVAL_P(arg), Z_STRLEN_P(arg), &lval, &dval, 0)) {
 		case IS_DOUBLE:
@@ -203,7 +201,7 @@ U_CFUNC PHP_FUNCTION(intltz_count_equivalent_ids)
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s",
 			&str_id, &str_id_len) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	UErrorCode status = UErrorCode();
@@ -226,13 +224,13 @@ U_CFUNC PHP_FUNCTION(intltz_create_time_zone_id_enumeration)
 	size_t	  region_len	= 0;
 	int32_t	  offset,
 			 *offsetp	= NULL;
-	zend_bool arg3isnull = 1;
+	bool arg3isnull = 1;
 
 	intl_error_reset(NULL);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l|s!l!",
 			&zoneType, &region, &region_len, &offset_arg, &arg3isnull) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	if (zoneType != UCAL_ZONE_TYPE_ANY && zoneType != UCAL_ZONE_TYPE_CANONICAL
@@ -271,7 +269,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_canonical_id)
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|z",
 			&str_id, &str_id_len, &is_systemid) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	UErrorCode status = UErrorCode();
@@ -308,7 +306,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_region)
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s",
 			&str_id, &str_id_len) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	UErrorCode status = UErrorCode();
@@ -330,7 +328,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_tz_data_version)
 	intl_error_reset(NULL);
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	UErrorCode status = UErrorCode();
@@ -348,9 +346,11 @@ U_CFUNC PHP_FUNCTION(intltz_get_equivalent_id)
 	zend_long	index;
 	intl_error_reset(NULL);
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "sl",
-			&str_id, &str_id_len, &index) == FAILURE ||
-			index < (zend_long)INT32_MIN || index > (zend_long)INT32_MAX) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "sl", &str_id, &str_id_len, &index) == FAILURE) {
+		RETURN_THROWS();
+	}
+
+	if (index < (zend_long)INT32_MIN || index > (zend_long)INT32_MAX) {
 		RETURN_FALSE;
 	}
 
@@ -377,7 +377,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_id)
 
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), getThis(), "O",
 			&object, TimeZone_ce_ptr) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	TIMEZONE_METHOD_FETCH_OBJECT;
@@ -400,7 +400,7 @@ U_CFUNC PHP_FUNCTION(intltz_use_daylight_time)
 
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), getThis(), "O",
 			&object, TimeZone_ce_ptr) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	TIMEZONE_METHOD_FETCH_OBJECT;
@@ -411,7 +411,7 @@ U_CFUNC PHP_FUNCTION(intltz_use_daylight_time)
 U_CFUNC PHP_FUNCTION(intltz_get_offset)
 {
 	double		date;
-	zend_bool	local;
+	bool	local;
 	zval		*rawOffsetArg,
 				*dstOffsetArg;
 	int32_t		rawOffset,
@@ -421,7 +421,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_offset)
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), getThis(),
 			"Odbz/z/", &object, TimeZone_ce_ptr, &date, &local, &rawOffsetArg,
 			&dstOffsetArg) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	TIMEZONE_METHOD_FETCH_OBJECT;
@@ -445,7 +445,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_raw_offset)
 
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), getThis(),
 			"O", &object, TimeZone_ce_ptr) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	TIMEZONE_METHOD_FETCH_OBJECT;
@@ -462,7 +462,7 @@ U_CFUNC PHP_FUNCTION(intltz_has_same_rules)
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), getThis(),
 			"OO", &object, TimeZone_ce_ptr, &other_object, TimeZone_ce_ptr)
 			== FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 	TIMEZONE_METHOD_FETCH_OBJECT;
 	other_to = Z_INTL_TIMEZONE_P(other_object);
@@ -484,7 +484,7 @@ static const TimeZone::EDisplayType display_types[] = {
 
 U_CFUNC PHP_FUNCTION(intltz_get_display_name)
 {
-	zend_bool	daylight		= 0;
+	bool	daylight		= 0;
 	zend_long	display_type	= TimeZone::LONG;
 	const char *locale_str		= NULL;
 	size_t		dummy			= 0;
@@ -493,7 +493,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_display_name)
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), getThis(),
 			"O|bls!", &object, TimeZone_ce_ptr, &daylight, &display_type,
 			&locale_str, &dummy) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	bool found = false;
@@ -530,7 +530,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_dst_savings)
 
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), getThis(),
 			"O", &object, TimeZone_ce_ptr) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	TIMEZONE_METHOD_FETCH_OBJECT;
@@ -545,7 +545,7 @@ U_CFUNC PHP_FUNCTION(intltz_to_date_time_zone)
 
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), getThis(),
 			"O", &object, TimeZone_ce_ptr) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	TIMEZONE_METHOD_FETCH_OBJECT;
@@ -566,7 +566,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_error_code)
 
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), getThis(), "O",
 			&object, TimeZone_ce_ptr) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	/* Fetch the object (without resetting its last error code ). */
@@ -584,7 +584,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_error_message)
 
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), getThis(), "O",
 			&object, TimeZone_ce_ptr) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 
@@ -599,9 +599,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_error_message)
 }
 
 #if U_ICU_VERSION_MAJOR_NUM >= 52
-/* {{{ proto string IntlTimeZone::getWindowsID(string $timezone)
-       proto string intltz_get_windows_id(string $timezone)
-Translate a system timezone (e.g. "America/Los_Angeles" into a
+/* {{{ Translate a system timezone (e.g. "America/Los_Angeles" into a
 Windows Timezone (e.g. "Pacific Standard Time")
  */
 U_CFUNC PHP_FUNCTION(intltz_get_windows_id)
@@ -611,7 +609,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_windows_id)
 	UErrorCode error;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &id) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	error = U_ZERO_ERROR;
@@ -637,9 +635,7 @@ U_CFUNC PHP_FUNCTION(intltz_get_windows_id)
 }
 /* }}} */
 
-/* {{{ proto string IntlTimeZone::getIDForWindowsID(string $timezone[, string $region = NULL])
-       proto string intltz_get_id_for_windows_id(string $timezone[, string $region = NULL])
-Translate a windows timezone (e.g. "Pacific Time Zone" into a
+/* {{{ Translate a windows timezone (e.g. "Pacific Time Zone" into a
 System Timezone (e.g. "America/Los_Angeles")
  */
 U_CFUNC PHP_FUNCTION(intltz_get_id_for_windows_id)
@@ -648,8 +644,8 @@ U_CFUNC PHP_FUNCTION(intltz_get_id_for_windows_id)
 	UnicodeString uWinID, uID;
 	UErrorCode error;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "S|S", &winID, &region) == FAILURE) {
-		return;
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "S|S!", &winID, &region) == FAILURE) {
+		RETURN_THROWS();
 	}
 
 	error = U_ZERO_ERROR;

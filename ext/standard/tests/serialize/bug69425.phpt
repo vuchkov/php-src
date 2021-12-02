@@ -6,12 +6,12 @@ Bug #69425: Use After Free in unserialize()
 // POC 1
 class test
 {
-	var $ryat;
+    var $ryat;
 
-	function __wakeup()
-	{
-		$this->ryat = 1;
-	}
+    function __wakeup()
+    {
+        $this->ryat = 1;
+    }
 }
 
 $data = unserialize('a:2:{i:0;O:4:"test":1:{s:4:"ryat";R:1;}i:1;i:2;}');
@@ -40,7 +40,7 @@ array(2) {
     ["s"]=>
     int(-1)
     ["f"]=>
-    float(-1)
+    float(0)
     ["weekday"]=>
     int(-1)
     ["weekday_behavior"]=>
